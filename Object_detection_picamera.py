@@ -137,6 +137,15 @@ if camera_type == 'picamera':
 
         t1 = cv2.getTickCount()
 
+        # eventually will replace below with something that actually gets the values
+
+        # # in radians
+        # lidar_angle_left = np.pi/4
+        # lidar_angle_right = 7 * np.pi/4
+        #
+        # # in meters
+        # lidar_radius = 0.47
+
         # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
         # i.e. a single-column array, where each item in the column has the pixel RGB value
         frame = np.copy(frame1.array)
@@ -167,7 +176,7 @@ if camera_type == 'picamera':
 #            use_normalized_coordinates=True,
 #            line_thickness=8,
 #            min_score_thresh=0.40)
-#            
+#
 #        cv2.putText(frame,"FPS: {0:.2f}".format(frame_rate_calc),(30,50),font,1,(255,255,0),2,cv2.LINE_AA)
 #
 #        # All the results have been drawn on the frame, so it's time to display it.
