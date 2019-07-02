@@ -7,6 +7,7 @@ This program uses a TensorFlow classifier to perform object detection on Picamer
 This code was written at Kogakuin University in Tokyo, Japan for an undergraduate research project in 2019 working on an indoor guide robot, under the guidance of Professor Koyo Katsura, and in partnership with Renesas Electronics Corp.
 
 The overall structure of the code was copied from Evan Juras's sample code implementing Tensorflow object recognition on the RPi:
+
 https://github.com/EdjeElectronics/TensorFlow-Object-Detection-on-the-Raspberry-Pi/
 
 日本語：
@@ -16,4 +17,5 @@ https://github.com/EdjeElectronics/TensorFlow-Object-Detection-on-the-Raspberry-
 本プログラムは、2019年、工学院大学の機械理工学科生の「自動走行案内ロボット」の研究のために書きました。この研究は、ルネサスエレクトロニクス株式会社の連携と、桂晃洋教授の指導の下で行われました。
 
 本プログラムはEvan Jurasさんの、TensorFlow物体認識を用いたサンプルコードをベースにしております。下記のリンクをご覧ください：
+
 https://github.com/EdjeElectronics/TensorFlow-Object-Detection-on-the-Raspberry-Pi/
