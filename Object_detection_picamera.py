@@ -153,8 +153,8 @@ for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=
 
                 # convert box boundaries into angles, where 0 degrees is at the
                 # middle of the image
-                box_angle_l = (0.5 - boxes[0][idx][1]) * IM_ANGLE
-                box_angle_r = (0.5 - boxes[0][idx][3]) * IM_ANGLE
+                box_angle_l = (boxes[0][idx][1] - 0.5) * IM_ANGLE
+                box_angle_r = (boxes[0][idx][3] - 0.5) * IM_ANGLE
                 print('L:' + str(box_angle_l))
                 print('R:' + str(box_angle_r))
 
