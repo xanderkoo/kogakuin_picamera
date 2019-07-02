@@ -1,21 +1,21 @@
-######## Picamera Object Detection Using Tensorflow Classifier #########
+######## Object Detection for RPi with Picamera and Lidar Input  #########
 #
-# Author: Evan Juras
-# Date: 4/15/18
+# Author: Xander Koo
+# Date: 2019/7/2
 # Description:
 # This program uses a TensorFlow classifier to perform object detection.
 # It loads the classifier uses it to perform object detection on a Picamera feed.
-# It draws boxes and scores around the objects of interest in each frame from
-# the Picamera. It also can be used with a webcam by adding "--usbcam"
-# when executing this script from the terminal.
+# Lidar input from a GR-PEACH microcontroller is given in the form of tuples
+# designating distinct objects, which this program marks as either high priority
+# or low priority (action or ignore).
 
-## Some of the code is copied from Google's example at
-## https://github.com/tensorflow/models/blob/master/research/object_detection/object_detection_tutorial.ipynb
+## This code was written at Kogakuin University in Tokyo, Japan for an undergraduate
+## research project working on an indoor guide robot, under the guidance of
+## Professor Koyo Katsura, and in partnership with Renesas Electronics Corp.
 
-## and some is copied from Dat Tran's example at
-## https://github.com/datitran/object_detector_app/blob/master/object_detection_app.py
-
-## but I changed it to make it more understandable to me.
+## The overall structure of the code was copied from Evan Juras's sample code
+## implementing Tensorflow object recognition on the RPi:
+## https://github.com/EdjeElectronics/TensorFlow-Object-Detection-on-the-Raspberry-Pi/
 
 
 # Import packages
@@ -121,12 +121,14 @@ for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=
 
     t1 = cv2.getTickCount()
 
-    # eventually will replace below with something that actually gets the values
+    # Eventually will replace below with something that actually gets the values.
+    # Assumes that the Lidar-processing GR-PEACH is going to be able to split the
+    # input into discrete detected objects.
 
-    # # tuple containing leftmost angle, rightmost angle, and minimum radius to
-    # # a detected object
+    # tuple containing leftmost angle, rightmost angle, and minimum radius to
+    # a detected object, s.t. 0 deg is the middle of the camera's field of view
     # lidar_input = {(np.pi/4, 7*np.pi/4, 0.47)} # in (radians, radians, meters)
-    lidar_input = {(-30, 0, 0.47), (0, 30, 0.47)} # in degrees
+    lidar_input = {(-30, 0, 0.47), (0, 30, 0.47)} # in (degrees, degrees, meters)
 
     # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
     # i.e. a single-column array, where each item in the column has the pixel RGB value
