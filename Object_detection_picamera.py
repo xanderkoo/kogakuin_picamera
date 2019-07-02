@@ -126,7 +126,7 @@ for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=
     # # tuple containing leftmost angle, rightmost angle, and minimum radius to
     # # a detected object
     # lidar_input = {(np.pi/4, 7*np.pi/4, 0.47)} # in (radians, radians, meters)
-    lidar_input = {(-20, 20, 0.47)} # in degrees
+    lidar_input = {(-30, 0, 0.47), (0, 30, 0.47)} # in degrees
 
     # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
     # i.e. a single-column array, where each item in the column has the pixel RGB value
@@ -150,6 +150,8 @@ for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=
             print('bound: ' + str(boxes[0][idx]))
 
             for (lidar_angle_l, lidar_angle_r, dist) in lidar_input:
+
+                print(str((lidar_angle_l, lidar_angle_r, dist)))
 
                 # convert box boundaries into angles, where 0 degrees is at the
                 # middle of the image
