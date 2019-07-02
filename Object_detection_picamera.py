@@ -145,9 +145,9 @@ for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=
     for idx, s in enumerate(scores[0]):
         if s > MIN_CONF:
 
+            print(str(category_index[int(classes[0][idx])]))
             print('confidence: ' + str(scores[0][idx]))
             print('bound: ' + str(boxes[0][idx]))
-
 
             for (lidar_angle_l, lidar_angle_r, dist) in lidar_input:
 
@@ -155,9 +155,12 @@ for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=
                 # middle of the image
                 box_angle_l = (0.5 - boxes[0][idx][1]) * IM_ANGLE
                 box_angle_r = (0.5 - boxes[0][idx][3]) * IM_ANGLE
+                print('L:' + str(box_angle_l))
+                print('R:' + str(box_angle_r))
 
                 # if the closest point on an obstacle is less than MIN_DIST away
                 if dist <= MIN_DIST:
+                    print('here1')
                     # if the detected boundary box surrounds the lidar reading (???)
                     # what's another way to do this??
                     if box_angle_l < lidar_angle_l and box_angle_r > lidar_angle_r:
@@ -165,11 +168,9 @@ for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=
                         if int(category_index[int(classes[0][idx])].get('id'))==1:
                             print('Person detected. Waiting.')
                             print('人間発見。一時待機します。')
-                            print(str(category_index[int(classes[0][idx])]))
                         else:
                             print('Non-person obstacle detected. Rerouting.')
                             print('人間でない障害物発見。回避します。')
-                            print(str(category_index[int(classes[0][idx])]))
 
     # # Draw the results of the detection (aka 'visulaize the results')
     # vis_util.visualize_boxes_and_labels_on_image_array(
