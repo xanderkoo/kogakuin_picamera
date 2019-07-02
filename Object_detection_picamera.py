@@ -37,15 +37,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 IM_WIDTH = 400   # Use smaller resolution for
 IM_HEIGHT = 304  # slightly faster framerate
 
-# Select camera type (if user enters --usbcam when calling this script,
-# a USB webcam will be used)
-camera_type = 'picamera'
-parser = argparse.ArgumentParser()
-parser.add_argument('--usbcam', help='Use a USB webcam instead of picamera',
-                    action='store_true')
-args = parser.parse_args()
-if args.usbcam:
-    camera_type = 'usb'
+# Horizontal angular size of the camera in degrees
+#IM_ANGLE = 165 # * np.pi / 180 # for the fisheye camera lens
+IM_ANGLE = 62.2 # * np.pi / 180 # for the stock picamera
 
 # This is needed since the working directory is the object_detection folder.
 sys.path.append('..')
@@ -70,17 +64,18 @@ PATH_TO_LABELS = os.path.join(CWD_PATH,'data','mscoco_label_map.pbtxt')
 # Number of classes the object detector can identify
 NUM_CLASSES = 90
 
+# minimum confidence for object detection
+MIN_CONF = 0.40
+
+# minimum distance threshold for robot taking allocation
+MIN_DIST = 2
+
 ## Load the label map.
-# Label maps map indices to category names, so that when the convolution
-# network predicts `5`, we know that this corresponds to `airplane`.
-# Here we use internal utility functions, but anything that returns a
-# dictionary mapping integers to appropriate string labels would be fine
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
 
 # dict containing all categories, keyed by the id field of each category
 category_index = label_map_util.create_category_index(categories)
-
 
 # Load the Tensorflow model into memory.
 detection_graph = tf.Graph()
@@ -92,7 +87,6 @@ with detection_graph.as_default():
         tf.import_graph_def(od_graph_def, name='')
 
     sess = tf.Session(graph=detection_graph)
-
 
 # Define input and output tensors (i.e. data) for the object detection classifier
 
@@ -114,136 +108,97 @@ num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 # Initialize frame rate calculation
 frame_rate_calc = 1
 freq = cv2.getTickFrequency()
-font = cv2.FONT_HERSHEY_SIMPLEX
+# font = cv2.FONT_HERSHEY_SIMPLEX
 
-# Initialize camera and perform object detection.
-# The camera has to be set up and used differently depending on if it's a
-# Picamera or USB webcam.
+# Initialize Picamera, grab reference to raw capture, and perform object detection.
+camera = PiCamera()
+camera.resolution = (IM_WIDTH,IM_HEIGHT)
+camera.framerate = 10
+rawCapture = PiRGBArray(camera, size=(IM_WIDTH,IM_HEIGHT))
+rawCapture.truncate(0)
 
-# I know this is ugly, but I basically copy+pasted the code for the object
-# detection loop twice, and made one work for Picamera and the other work
-# for USB.
+for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=True):
 
-### Picamera ###
-if camera_type == 'picamera':
-    # Initialize Picamera and grab reference to the raw capture
-    camera = PiCamera()
-    camera.resolution = (IM_WIDTH,IM_HEIGHT)
-    camera.framerate = 10
-    rawCapture = PiRGBArray(camera, size=(IM_WIDTH,IM_HEIGHT))
+    t1 = cv2.getTickCount()
+
+    # eventually will replace below with something that actually gets the values
+
+    # # tuple containing leftmost angle, rightmost angle, and minimum radius to
+    # # a detected object
+    # lidar_input {(np.pi/4, 7*np.pi/4, 0.47)} # in (radians, radians, meters)
+    lidar_input {-20, 20, 0.47)} # in degrees
+
+    # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
+    # i.e. a single-column array, where each item in the column has the pixel RGB value
+    frame = np.copy(frame1.array)
+    frame.setflags(write=1)
+    frame_expanded = np.expand_dims(frame, axis=0)
+
+    # Perform the actual detection by running the model with the image as input
+    (boxes, scores, classes, num) = sess.run(
+        [detection_boxes, detection_scores, detection_classes, num_detections],
+        feed_dict={image_tensor: frame_expanded})
+
+    print('\nNew Frame')
+
+    # iterate through the scores and print data corresponding to scores that meet the threshold
+    for idx, s in enumerate(scores[0]):
+        if s > MIN_CONF:
+
+            print('confidence: ' + str(scores[0][idx]))
+            print('bound: ' + str(boxes[0][idx]))
+
+
+            for (lidar_angle_l, lidar_angle_r, dist) in lidar_input:
+
+                # convert box boundaries into angles, where 0 degrees is at the
+                # middle of the image
+                box_angle_l = (0.5 - boxes[0][idx][1]) * IM_ANGLE
+                box_angle_r = (0.5 - boxes[0][idx][3]) * IM_ANGLE
+
+                # if the closest point on an obstacle is less than MIN_DIST away
+                if dist <= MIN_DIST:
+                    # if the detected boundary box surrounds the lidar reading (???)
+                    # what's another way to do this??
+                    if box_angle_l < lidar_angle_l and box_angle_r > lidar_angle_r:
+                        # if the object is a human
+                        if int(category_index[int(classes[0][idx])].get('id'))==1:
+                            print('Person detected. Waiting.')
+                            print('人間発見。一時待機します。')
+                            print(str(category_index[int(classes[0][idx])]))
+                        else:
+                            print('Non-person obstacle detected. Rerouting.')
+                            print('人間でない障害物発見。回避します。')
+                            print(str(category_index[int(classes[0][idx])]))
+
+    # # Draw the results of the detection (aka 'visulaize the results')
+    # vis_util.visualize_boxes_and_labels_on_image_array(
+    #    frame,
+    #    np.squeeze(boxes),
+    #    np.squeeze(classes).astype(np.int32),
+    #    np.squeeze(scores),
+    #    category_index,
+    #    use_normalized_coordinates=True,
+    #    line_thickness=8,
+    #    min_score_thresh=MIN_CONF)
+    #
+    # cv2.putText(frame,"FPS: {0:.2f}".format(frame_rate_calc),(30,50),font,1,(255,255,0),2,cv2.LINE_AA)
+    #
+    # # All the results have been drawn on the frame, so it's time to display it.
+    # cv2.imshow('Object detector', frame)
+
+    # find FPS, print into console
+    t2 = cv2.getTickCount()
+    time1 = (t2-t1)/freq
+    frame_rate_calc = 1/time1
+    print("FPS: " + str(frame_rate_calc))
+
+    # Press 'q' to quit
+    if cv2.waitKey(1) == ord('q'):
+        break
+
     rawCapture.truncate(0)
 
-    for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=True):
-
-        t1 = cv2.getTickCount()
-
-        # eventually will replace below with something that actually gets the values
-
-        # # in radians
-        # lidar_angle_left = np.pi/4
-        # lidar_angle_right = 7 * np.pi/4
-        #
-        # # in meters
-        # lidar_radius = 0.47
-
-        # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
-        # i.e. a single-column array, where each item in the column has the pixel RGB value
-        frame = np.copy(frame1.array)
-        frame.setflags(write=1)
-        frame_expanded = np.expand_dims(frame, axis=0)
-
-        # Perform the actual detection by running the model with the image as input
-        (boxes, scores, classes, num) = sess.run(
-            [detection_boxes, detection_scores, detection_classes, num_detections],
-            feed_dict={image_tensor: frame_expanded})
-
-        print("\nNew Frame")
-
-        # iterate through the scores and print data corresponding to scores that meet the threshold
-        for idx, s in enumerate(scores[0]):
-            if s > 0.40:
-                print(str(category_index[int(classes[0][idx])]))
-                print('confidence: ' + str(scores[0][idx]))
-                print('bound: ' + str(boxes[0][idx]))
-
-#        # Draw the results of the detection (aka 'visulaize the results')
-#        vis_util.visualize_boxes_and_labels_on_image_array(
-#            frame,
-#            np.squeeze(boxes),
-#            np.squeeze(classes).astype(np.int32),
-#            np.squeeze(scores),
-#            category_index,
-#            use_normalized_coordinates=True,
-#            line_thickness=8,
-#            min_score_thresh=0.40)
-#
-#        cv2.putText(frame,"FPS: {0:.2f}".format(frame_rate_calc),(30,50),font,1,(255,255,0),2,cv2.LINE_AA)
-#
-#        # All the results have been drawn on the frame, so it's time to display it.
-#        cv2.imshow('Object detector', frame)
-
-        # find FPS, print into console
-        t2 = cv2.getTickCount()
-        time1 = (t2-t1)/freq
-        frame_rate_calc = 1/time1
-        print("FPS: " + str(frame_rate_calc))
-
-        # Press 'q' to quit
-        if cv2.waitKey(1) == ord('q'):
-            break
-
-        rawCapture.truncate(0)
-
-    camera.close()
-
-### USB webcam (disabled for now) ###
-elif camera_type == 'usb':
-
-    print("no")
-
-    # # Initialize USB webcam feed
-    # camera = cv2.VideoCapture(0)s
-    # ret = camera.set(3,IM_WIDTH)
-    # ret = camera.set(4,IM_HEIGHT)
-    #
-    # while(True):
-    #
-    #     t1 = cv2.getTickCount()
-    #
-    #     # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
-    #     # i.e. a single-column array, where each item in the column has the pixel RGB value
-    #     ret, frame = camera.read()
-    #     frame_expanded = np.expand_dims(frame, axis=0)
-    #
-    #     # Perform the actual detection by running the model with the image as input
-    #     (boxes, scores, classes, num) = sess.run(
-    #         [detection_boxes, detection_scores, detection_classes, num_detections],
-    #         feed_dict={image_tensor: frame_expanded})
-    #
-    #     # Draw the results of the detection (aka 'visulaize the results')
-    #     vis_util.visualize_boxes_and_labels_on_image_array(
-    #         frame,
-    #         np.squeeze(boxes),
-    #         np.squeeze(classes).astype(np.int32),
-    #         np.squeeze(scores),
-    #         category_index,
-    #         use_normalized_coordinates=True,
-    #         line_thickness=8,
-    #         min_score_thresh=0.85)
-    #
-    #     cv2.putText(frame,"FPS: {0:.2f}".format(frame_rate_calc),(30,50),font,1,(255,255,0),2,cv2.LINE_AA)
-    #
-    #     # All the results have been drawn on the frame, so it's time to display it.
-    #     cv2.imshow('Object detector', frame)
-    #
-    #     t2 = cv2.getTickCount()
-    #     time1 = (t2-t1)/freq
-    #     frame_rate_calc = 1/time1
-    #
-    #     # Press 'q' to quit
-    #     if cv2.waitKey(1) == ord('q'):
-    #         break
-    #
-    # camera.release()
+camera.close()
 
 cv2.destroyAllWindows()
