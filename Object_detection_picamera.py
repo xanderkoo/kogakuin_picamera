@@ -1,21 +1,17 @@
 ######## Object Detection for RPi with Picamera and Lidar Input  #########
 #
-# Author: Xander Koo
+# Author: Xander Koo ゼンダー・クー
 # Date: 2019/7/2
 # Description:
 # This program uses a TensorFlow classifier to perform object detection on a
-# Picamera feed. Lidar data input from a GR-PEACH microcontroller is given in the form of tuples
-# designating distinct objects, which this program marks as either high priority
-# or low priority (action or ignore).
+# Picamera feed. LIDAR data input from a GR-PEACH microcontroller is given in
+# the form of tuples designating distinct objects, which this program marks as
+# either high priority or low priority (action or ignore).
 # 本プログラムはTensorFlowの分類機で物体検出・認識を Picameraの映像で実行する。GR-PEACHに
-# 処理されたLidarデータもインプットとなる。そのデータでは、障害物は個別に順序組（tuple）に
-# 分かれており、 それらの順序組が高優先か底優先（すなわち待機するか回避するか）と本プログラムに
+# 処理されたLIDARデータもインプットとなる。そのデータでは、障害物は個別に順序組（tuple）に
+# 分かれており、 それらの順序組が高優先か低優先（すなわち待機するか回避するか）と本プログラムに
 # 指定される。
-
-## This code was written at Kogakuin University in Tokyo, Japan for an undergraduate
-## research project working on an indoor guide robot, under the guidance of
-## Professor Koyo Katsura, and in partnership with Renesas Electronics Corp.
-
+#
 ## The overall structure of the code was copied from Evan Juras's sample code
 ## implementing Tensorflow object recognition on the RPi:
 ## 本プログラムはEvan Jurasさんの、TensorFlow物体認識を用いたサンプルコードをベースに
@@ -39,6 +35,13 @@ import sys
 import smbus
 import time
 bus = smbus.SMBus(1)
+
+# for processing the input from the GR-PEACH
+import struct
+
+# TODO: update this with the address actually being used by the GR-PEACH
+# TODO: GR-PEACHの実際のアドレスを書き込まんと
+address = 0x08
 
 # suppress warning messages about memory allocation
 # 警告を抑制する
@@ -136,16 +139,28 @@ rawCapture.truncate(0)
 try:
     for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=True):
 
+
+
         t1 = cv2.getTickCount()
 
         # Eventually will replace below with something that actually gets the values.
         # Assumes that the Lidar-processing GR-PEACH is going to be able to split the
         # input into discrete detected objects.
 
-        # tuple containing leftmost angle, rightmost angle, and minimum radius to
-        # a detected object, s.t. 0 deg is the middle of the camera's field of view
-        # lidar_input = {(np.pi/4, 7*np.pi/4, 0.47)} # in (radians, radians, meters)
-        lidar_input = {(-30, 0, 0.47), (0, 30, 0.47)} # in (degrees, degrees, meters)
+        # gets one object detected by the lidar (rpi is the master in this case)
+        # TODO:
+        lidar_input = {}
+        for x in range(0,2):
+            in_list = bus.read_i2c_block_data(address, 0, 12)
+            # tuple containing leftmost angle, rightmost angle, and minimum radius to
+            # a detected object, s.t. 0 deg is the middle of the camera's field of view
+            in_tuple = (struct.unpack('<f', struct.pack('4B', in_list[0:4]))
+                        struct.unpack('<f', struct.pack('4B', in_list[4:8]))
+                        struct.unpack('<f', struct.pack('4B', in_list[8:12])))
+            lidar_input.add(in_tuple)
+            # uses (degrees, degrees, meters)
+
+            # end byte(s) would be signalled by a negative distance or something 
 
         # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
         # i.e. a single-column array, where each item in the column has the pixel RGB value
@@ -161,7 +176,7 @@ try:
         print('\nNew Frame')
 
         # iterate through the scores and print data corresponding to scores that
-        # meet the threshold
+        # meet the threshold. effectively iterates thru every detected object
         for idx, s in enumerate(scores[0]):
             if s > MIN_CONF:
 
@@ -182,7 +197,7 @@ try:
 
                     # if the closest point on an obstacle is less than MIN_DIST away
                     if dist <= MIN_DIST:
-                        print('here1')
+                        print('obstacle within range')
                         # if the detected boundary box surrounds the lidar reading (???)
                         # what's another way to do this??
                         if box_angle_l < lidar_angle_l and box_angle_r > lidar_angle_r:
