@@ -148,19 +148,31 @@ try:
         # input into discrete detected objects.
 
         # gets one object detected by the lidar (rpi is the master in this case)
-        # TODO:
+        
         lidar_input = {}
-        for x in range(0,2):
-            in_list = bus.read_i2c_block_data(address, 0, 12)
+        
+        # マイナス値の距離に当たるまでループを続ける
+        while true:
+            # get 12 bytes at a time from the GR-PEACH via I2C, representing 3 floats (left
+            # angle, right angle, distance), 4 bytes each.
+            in_sublist = bus.read_i2c_block_data(address, 0, 12)
+            
+            # process the distance first, as a negative distance will indicate a termination
+            # of the sequence
+            # 距離の値がマイナスである場合は、
+            dist = struct.unpack('<f', struct.pack('4B', in_sublist[8:12]))
+            if dist < 0:
+                break
+            
             # tuple containing leftmost angle, rightmost angle, and minimum radius to
             # a detected object, s.t. 0 deg is the middle of the camera's field of view
-            in_tuple = (struct.unpack('<f', struct.pack('4B', in_list[0:4]))
-                        struct.unpack('<f', struct.pack('4B', in_list[4:8]))
-                        struct.unpack('<f', struct.pack('4B', in_list[8:12])))
+            in_tuple = (struct.unpack('<f', struct.pack('4B', in_sublist[0:4]))
+                        struct.unpack('<f', struct.pack('4B', in_sublist[4:8]))
+                        dist)
             lidar_input.add(in_tuple)
             # uses (degrees, degrees, meters)
 
-            # end byte(s) would be signalled by a negative distance or something 
+            # TODO: end byte(s) would be signalled by a negative distance or something 
 
         # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
         # i.e. a single-column array, where each item in the column has the pixel RGB value
