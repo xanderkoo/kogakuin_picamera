@@ -21,6 +21,10 @@
 
 print('Importing packages and setting up constants')
 
+# suppress warnings lol
+if not sys.warnoptions:
+    warnings.simplefilter("ignore")
+
 # Import packages
 # パッケージを読み込む
 import os
