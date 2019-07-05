@@ -173,14 +173,14 @@ try:
             # process the distance first, as a negative distance will indicate a termination
             # of the sequence
             # 距離の値がマイナスである場合は、
-            dist = struct.unpack('<f', struct.pack('4B', in_list[8:12]))
+            dist = struct.unpack('<f', struct.pack('4B', *in_list[8:12]))
             if dist < 0:
                 break
 
             # tuple containing leftmost angle, rightmost angle, and minimum radius to
             # a detected object, s.t. 0 deg is the middle of the camera's field of view
-            in_tuple = (struct.unpack('<f', struct.pack('4B', in_list[0:4])),
-                        struct.unpack('<f', struct.pack('4B', in_list[4:8])),
+            in_tuple = (struct.unpack('<f', struct.pack('4B', *in_list[0:4])),
+                        struct.unpack('<f', struct.pack('4B', *in_list[4:8])),
                         dist)
             lidar_input.add(in_tuple)
             # uses (degrees, degrees, meters)
