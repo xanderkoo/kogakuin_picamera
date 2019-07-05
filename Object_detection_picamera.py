@@ -18,6 +18,8 @@
 ## しております。下記のリンクをご覧ください：
 ## https://github.com/EdjeElectronics/TensorFlow-Object-Detection-on-the-Raspberry-Pi/
 
+# hello
+
 
 print('Importing packages and setting up constants')
 
