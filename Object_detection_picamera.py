@@ -163,10 +163,15 @@ try:
 
         lidar_input = set()
 
+        # TODO: verify if the below gets ALL data
+        print(bus.read_i2c_block_data(address, 0))
+
         # マイナス値の距離に当たるまでループを続ける
         while True:
-            # get 12 bytes at a time from the GR-PEACH via I2C, representing 3 floats (left
-            # angle, right angle, distance), 4 bytes each.
+            # get 12 bytes at a time from the GR-PEACH via I2C, representing 3 floats
+            # (left angle, right angle, distance), 4 bytes each.
+            # (note: not sure what the second parameter (long cmd) represents
+
             in_list = bus.read_i2c_block_data(address, 0, 12)
             print(str(in_list))
 
@@ -200,9 +205,11 @@ try:
 
         print('\nNew Frame')
 
-        # iterate through the scores and print data corresponding to scores that
-        # meet the threshold. effectively iterates thru every detected object
+        # iterates thru every TensorFlow detected object
         for idx, s in enumerate(scores[0]):
+
+            # if the TF-detected object has a high enough confidence, continue
+            # to see if it corresponds with a LIDAR-detected object
             if s > MIN_CONF:
 
                 print(str(category_index[int(classes[0][idx])]))
@@ -215,6 +222,8 @@ try:
 
                     # convert box boundaries into angles, where 0 degrees is at the
                     # middle of the image
+                    # note: this assumes the use of a fisheye lens, i.e. that angular
+                    # diameter is linearly related to distance in the image
                     box_angle_l = (boxes[0][idx][1] - 0.5) * IM_ANGLE
                     box_angle_r = (boxes[0][idx][3] - 0.5) * IM_ANGLE
                     print('L:' + str(box_angle_l))
@@ -224,18 +233,31 @@ try:
                     if dist <= MIN_DIST:
                         print('obstacle within range')
                         # if the detected boundary box surrounds the lidar reading (???)
-                        # what's another way to do this??
+                        # TODO: figure out a more reliable way of deciding how to map
+                        # lidar readings to bounding boxes from Tensorflow
                         if box_angle_l < lidar_angle_l and box_angle_r > lidar_angle_r:
-                            # if the object is a human
+                            # if the object is a human, send a signal to the GR-PEACH
+                            # to wait, and stop looking at other
                             if int(category_index[int(classes[0][idx])].get('id'))==1:
                                 print('Person detected. Waiting.')
-                                print('人間発見。一時待機します。')
+                                print('人間発見。一旦待機します。')
+
+                                # TODO: transmit True to GR-PEACH
+
+                                # once there is a human within range, we can break from
+                                # the loop
+                                break
                             else:
                                 print('Non-person obstacle detected. Rerouting.')
                                 print('人間でない障害物発見。回避します。')
 
-                    # TODO: eventually, we want to just output a boolean as a single
-                    # bit, to indicate whether the robot car should wait or reroute
+                # continue looping if inside loop wasn't broken out of
+                else:
+                    continue
+
+                # if break was called (i.e. if person was detected in range),
+                # breaks out of the loop iterating through the TF-detected objects
+                break
 
         # # Draw the results of the detection (aka 'visulaize the results')
         # vis_util.visualize_boxes_and_labels_on_image_array(
