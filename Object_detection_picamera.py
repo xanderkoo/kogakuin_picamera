@@ -21,6 +21,9 @@
 
 print('Importing packages and setting up constants')
 
+import sys
+import warnings
+
 # suppress warnings lol
 if not sys.warnoptions:
     warnings.simplefilter("ignore")
@@ -34,7 +37,6 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 import tensorflow as tf
 import argparse
-import sys
 
 # for connecting the RPi to the GR-PEACH via I2C
 # RPiとGR-PEACHを組み合わせるにはI2Cを使用
