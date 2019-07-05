@@ -161,7 +161,7 @@ try:
 
         # gets one object detected by the lidar (rpi is the master in this case)
 
-        lidar_input = {}
+        lidar_input = set()
 
         # マイナス値の距離に当たるまでループを続ける
         while True:
