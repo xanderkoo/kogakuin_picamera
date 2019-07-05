@@ -160,7 +160,7 @@ try:
         lidar_input = {}
 
         # マイナス値の距離に当たるまでループを続ける
-        while true:
+        while True:
             # get 12 bytes at a time from the GR-PEACH via I2C, representing 3 floats (left
             # angle, right angle, distance), 4 bytes each.
             in_list = bus.read_i2c_block_data(address, 0, 12)
