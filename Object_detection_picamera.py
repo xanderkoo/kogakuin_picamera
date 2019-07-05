@@ -147,8 +147,6 @@ rawCapture.truncate(0)
 try:
     for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=True):
 
-
-
         t1 = cv2.getTickCount()
 
         # Eventually will replace below with something that actually gets the values.
@@ -164,7 +162,7 @@ try:
             # get 12 bytes at a time from the GR-PEACH via I2C, representing 3 floats (left
             # angle, right angle, distance), 4 bytes each.
             in_list = bus.read_i2c_block_data(address, 0, 12)
-            print(str(in_sublist))
+            print(str(in_list))
 
             # process the distance first, as a negative distance will indicate a termination
             # of the sequence
