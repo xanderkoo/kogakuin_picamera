@@ -47,9 +47,10 @@ bus = smbus.SMBus(1)
 # for processing the input from the GR-PEACH
 import struct
 
-# TODO: update this with the address actually being used by the GR-PEACH
-# TODO: GR-PEACHの実際のアドレスを書き込まんと
-address = 0x08
+# TODO: update this with the address actually being used by the LIDAR GR-PEACH
+# TODO: 実際のアドレスを書き込まんと/
+address_in = 0x08 # address of LIDAR data GR-PEACH
+address_out = 0x60 # address of output GR-PEACH
 
 # suppress warning messages about memory allocation
 # 警告を抑制する
@@ -78,38 +79,48 @@ from utils import visualization_utils as vis_util
 print('Initializing TensorFlow model')
 
 # Name of the directory containing the object detection module we're using
+# 使用するモデルのディレクトリー
 MODEL_NAME = 'ssdlite_mobilenet_v2_coco_2018_05_09'
 
 # Grab path to current working directory
+# ワークスペースのディレクトリー
 CWD_PATH = os.getcwd()
 
 # Path to frozen detection graph .pb file, which contains the model that is used
 # for object detection.
+# .pbファイルのfrozen detection graphを示すパス。このファイルには物体検出のモデルがある
 PATH_TO_CKPT = os.path.join(CWD_PATH,MODEL_NAME,'frozen_inference_graph.pb')
 
 # Path to label map file
+# ラベルマップのファイルパス
 PATH_TO_LABELS = os.path.join(CWD_PATH,'data','mscoco_label_map.pbtxt')
 
 # Number of classes the object detector can identify
+# モデルが検出できるクラス数
 NUM_CLASSES = 90
 
 # minimum confidence for object detection
+# 認識の最低確率（これ以下の値は表紙しない）
 MIN_CONF = 0.40
 
 # minimum distance threshold for robot to respond to obstacles
+# 障害物に反応する最低距離
 MIN_DIST = 2
 
 ## Load the label map.
+## ラベルマップを読み込む
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
 categories = label_map_util.convert_label_map_to_categories(label_map,
                 max_num_classes=NUM_CLASSES, use_display_name=True)
 
 # dict containing all categories, keyed by the id field of each category
+# クラスを全部含んだ連想配列（dict）。キー：クラスのID
 category_index = label_map_util.create_category_index(categories)
 
 print('Loading model into memory')
 
 # Load the Tensorflow model into memory.
+# モデルをメモリーに読み込む
 detection_graph = tf.Graph()
 with detection_graph.as_default():
     od_graph_def = tf.GraphDef()
@@ -121,50 +132,51 @@ with detection_graph.as_default():
     sess = tf.Session(graph=detection_graph)
 
 # Define input and output tensors (i.e. data) for the object detection classifier
+# 正直わからん
 print('Defining tensors')
-
 # Input tensor is the image
 image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
-
 # Output tensors are the detection boxes, scores, and classes
 # Each box represents a part of the image where a particular object was detected
 detection_boxes = detection_graph.get_tensor_by_name('detection_boxes:0')
-
 # Each score represents level of confidence for each of the objects.
 # The score is shown on the result image, together with the class label.
 detection_scores = detection_graph.get_tensor_by_name('detection_scores:0')
 detection_classes = detection_graph.get_tensor_by_name('detection_classes:0')
-
 # Number of objects detected
 num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 
 # Initialize frame rate calculation
+# フレームレートの計算を起動させる
 frame_rate_calc = 1
 freq = cv2.getTickFrequency()
 # font = cv2.FONT_HERSHEY_SIMPLEX
 
 # Initialize Picamera, grab reference to raw capture, and perform object detection.
+# Picamera を起動させ、物体認識を実行
 print('Initializing Picamera')
 camera = PiCamera()
 camera.resolution = (IM_WIDTH,IM_HEIGHT)
 camera.framerate = 10
 rawCapture = PiRGBArray(camera, size=(IM_WIDTH,IM_HEIGHT))
 rawCapture.truncate(0)
+
+# object detection
+# 物体検出・認識の部分
 try:
     for frame1 in camera.capture_continuous(rawCapture, format="bgr",use_video_port=True):
 
         t1 = cv2.getTickCount()
 
-        # Eventually will replace below with something that actually gets the values.
         # Assumes that the Lidar-processing GR-PEACH is going to be able to split the
-        # input into discrete detected objects.
-
-        # gets one object detected by the lidar (rpi is the master in this case)
+        # input into discrete detected objects, and that the RPi is the master of
+        # the GR-PEACH in question
+        # 下記の部分は、GR-PEACHが個別の障害物を検出できる・RPiがマスターで、GR-PEACHがスレーブだであるという前提で書いた
 
         lidar_input = set()
 
         # TODO: verify if the below gets ALL data
-        print(bus.read_i2c_block_data(address, 0))
+        print(bus.read_i2c_block_data(address_in, 0))
 
         # マイナス値の距離に当たるまでループを続ける
         while True:
@@ -172,7 +184,7 @@ try:
             # (left angle, right angle, distance), 4 bytes each.
             # (note: not sure what the second parameter (long cmd) represents
 
-            in_list = bus.read_i2c_block_data(address, 0, 12)
+            in_list = bus.read_i2c_block_data(address_in, 0, 12)
             print(str(in_list))
 
             # process the distance first, as a negative distance will indicate a termination
@@ -189,8 +201,6 @@ try:
                         dist)
             lidar_input.add(in_tuple)
             # uses (degrees, degrees, meters)
-
-            # TODO: end byte(s) would be signalled by a negative distance or something
 
         # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
         # i.e. a single-column array, where each item in the column has the pixel RGB value
@@ -243,6 +253,7 @@ try:
                                 print('人間発見。一旦待機します。')
 
                                 # TODO: transmit True to GR-PEACH
+                                #
 
                                 # once there is a human within range, we can break from
                                 # the loop
