@@ -19,6 +19,8 @@
 ## https://github.com/EdjeElectronics/TensorFlow-Object-Detection-on-the-Raspberry-Pi/
 
 
+print('Importing packages and setting up constants')
+
 # Import packages
 # パッケージを読み込む
 import os
@@ -67,6 +69,8 @@ sys.path.append('..')
 from utils import label_map_util
 from utils import visualization_utils as vis_util
 
+print('Initializing TensorFlow model')
+
 # Name of the directory containing the object detection module we're using
 MODEL_NAME = 'ssdlite_mobilenet_v2_coco_2018_05_09'
 
@@ -97,6 +101,8 @@ categories = label_map_util.convert_label_map_to_categories(label_map,
 # dict containing all categories, keyed by the id field of each category
 category_index = label_map_util.create_category_index(categories)
 
+print('Loading model into memory')
+
 # Load the Tensorflow model into memory.
 detection_graph = tf.Graph()
 with detection_graph.as_default():
@@ -109,6 +115,7 @@ with detection_graph.as_default():
     sess = tf.Session(graph=detection_graph)
 
 # Define input and output tensors (i.e. data) for the object detection classifier
+print('Defining tensors')
 
 # Input tensor is the image
 image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
@@ -131,6 +138,7 @@ freq = cv2.getTickFrequency()
 # font = cv2.FONT_HERSHEY_SIMPLEX
 
 # Initialize Picamera, grab reference to raw capture, and perform object detection.
+print('Initializing Picamera')
 camera = PiCamera()
 camera.resolution = (IM_WIDTH,IM_HEIGHT)
 camera.framerate = 10
@@ -155,19 +163,20 @@ try:
         while true:
             # get 12 bytes at a time from the GR-PEACH via I2C, representing 3 floats (left
             # angle, right angle, distance), 4 bytes each.
-            in_sublist = bus.read_i2c_block_data(address, 0, 12)
+            in_list = bus.read_i2c_block_data(address, 0, 12)
+            print(str(in_sublist))
 
             # process the distance first, as a negative distance will indicate a termination
             # of the sequence
             # 距離の値がマイナスである場合は、
-            dist = struct.unpack('<f', struct.pack('4B', in_sublist[8:12]))
+            dist = struct.unpack('<f', struct.pack('4B', in_list[8:12]))
             if dist < 0:
                 break
 
             # tuple containing leftmost angle, rightmost angle, and minimum radius to
             # a detected object, s.t. 0 deg is the middle of the camera's field of view
-            in_tuple = (struct.unpack('<f', struct.pack('4B', in_sublist[0:4])),
-                        struct.unpack('<f', struct.pack('4B', in_sublist[4:8])),
+            in_tuple = (struct.unpack('<f', struct.pack('4B', in_list[0:4])),
+                        struct.unpack('<f', struct.pack('4B', in_list[4:8])),
                         dist)
             lidar_input.add(in_tuple)
             # uses (degrees, degrees, meters)
