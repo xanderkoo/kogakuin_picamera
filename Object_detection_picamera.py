@@ -18,8 +18,6 @@
 ## しております。下記のリンクをご覧ください：
 ## https://github.com/EdjeElectronics/TensorFlow-Object-Detection-on-the-Raspberry-Pi/
 
-# hello
-
 
 print('Importing packages and setting up constants')
 
@@ -177,9 +175,11 @@ try:
 
         lidar_input = set()
 
-        # TODO: verify if the below gets ALL data
+        # TODO: verify if the below gets ALL data.
+        # 下記のコマンドはデータを全部とるかを確認する
         print(bus.read_i2c_block_data(address_in, 0))
 
+        # continue looping until it hits a negative value for the distance
         # マイナス値の距離に当たるまでループを続ける
         while True:
             # get 12 bytes at a time from the GR-PEACH via I2C, representing 3 floats
@@ -198,19 +198,24 @@ try:
 
             # tuple containing leftmost angle, rightmost angle, and minimum radius to
             # a detected object, s.t. 0 deg is the middle of the camera's field of view
+            # (＜最左の角度＞、＜最右の角度＞、＜LIDARと障害物の間の距離＞)の値を含んだ順序組(tuple)
+            # 0度は画像の中央である
             in_tuple = (struct.unpack('<f', struct.pack('4B', *in_list[0:4]))[0],
                         struct.unpack('<f', struct.pack('4B', *in_list[4:8]))[0],
                         dist)
             lidar_input.add(in_tuple)
             # uses (degrees, degrees, meters)
+            # 単位：(度、度、メートル)
 
         # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
         # i.e. a single-column array, where each item in the column has the pixel RGB value
+        # この部分は具体的に何を行なっているのかわからないが、推論用の同位列(array)を用意しているのではないかと
         frame = np.copy(frame1.array)
         frame.setflags(write=1)
         frame_expanded = np.expand_dims(frame, axis=0)
 
         # Perform the actual detection by running the model with the image as input
+        # 画像をインプットとして、推論（物体検出＋認識）を実行する
         (boxes, scores, classes, num) = sess.run(
             [detection_boxes, detection_scores, detection_classes, num_detections],
             feed_dict={image_tensor: frame_expanded})
@@ -218,12 +223,15 @@ try:
         print('\nNew Frame')
 
         # iterates thru every TensorFlow detected object
+        # TensorFlowの推論の結果をみて、TFが検出した物を一つ一つ処理する
         for idx, s in enumerate(scores[0]):
 
             # if the TF-detected object has a high enough confidence, continue
             # to see if it corresponds with a LIDAR-detected object
+            # 物体の検出確率が最低限より高かったら、処理を続ける
             if s > MIN_CONF:
 
+                # debug用のprint
                 print(str(category_index[int(classes[0][idx])]))
                 print('confidence: ' + str(scores[0][idx]))
                 print('bound: ' + str(boxes[0][idx]))
