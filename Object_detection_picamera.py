@@ -250,15 +250,15 @@ try:
             if s > MIN_CONF:
 
                 # debug用のprint
-                print(str(category_index[int(classes[0][idx])]))
-                print('confidence: ' + str(scores[0][idx]))
-                print('bound: ' + str(boxes[0][idx]))
+                # print(str(category_index[int(classes[0][idx])]))
+                # print('confidence: ' + str(scores[0][idx]))
+                # print('bound: ' + str(boxes[0][idx]))
 
                 # iterates through every element in the lidar_input set, i.e.
                 # every distinct object identified by the LIDAR
                 for (lidar_angle_l, lidar_angle_r, dist) in lidar_input:
 
-                    print(str((lidar_angle_l, lidar_angle_r, dist)))
+                    # print(str((lidar_angle_l, lidar_angle_r, dist)))
 
                     # convert box boundaries into angles, where 0 degrees is at the
                     # middle of the image
@@ -266,22 +266,31 @@ try:
                     # diameter is linearly related to distance in the image
                     box_angle_l = (boxes[0][idx][1] - 0.5) * IM_ANGLE
                     box_angle_r = (boxes[0][idx][3] - 0.5) * IM_ANGLE
-                    print('L:' + str(box_angle_l))
-                    print('R:' + str(box_angle_r))
+                    # print('L:' + str(box_angle_l))
+                    # print('R:' + str(box_angle_r))
+
+                    # デモ用です
+                    if lidar_angle_l == -30:
+                        print('Left 左側')
+                    if lidar_angle_l == -5:
+                        print('Center 中央')
+                    if lidar_angle_l == 20:
+                        print('Right 右側')
 
                     # if the closest point on an obstacle is less than MIN_DIST away
                     if dist <= MIN_DIST:
-                        print('obstacle within range')
+                        # debug用のprint
+                        # print('obstacle within range')
 
-                        # if the bounds of the LIDAR-detected object are entirely
+                        # If the bounds of the LIDAR-detected object are entirely
                         # within the TensorFlow bounding box, then we will consider
                         # them to be representing the same object
+                        # TODO: Figure out a more reliable way of deciding how
+                        # to map LIDAR objects to bounding boxes from Tensorflow.
+                        #
                         # LIDARが特定した物体の範囲が全部TensorFlowが特定したバウンディング
                         # ボックスの範囲以内であれば、LIDARが検出したものとTFが検出したものは、
                         # 同じ物体を示していると言えるでしょう
-
-                        # TODO: figure out a more reliable way of deciding how
-                        # to map LIDAR objects to bounding boxes from Tensorflow
                         # TODO: もっとマシ・有効な手段を考えておこう。LIDARの物体とTFの
                         # 物体はどうすればマッピングできるのか？というのが問題です
                         if box_angle_l < lidar_angle_l and box_angle_r > lidar_angle_r:
@@ -299,6 +308,9 @@ try:
                             else:
                                 print('Non-person obstacle detected. Rerouting.')
                                 print('人間でない障害物発見。回避します。')
+                        else:
+                            print('No obstacle detected.')
+                            print('物体が検出されていません。')
 
                 # continue looping if inside loop wasn't broken out of
                 else:
@@ -335,7 +347,7 @@ try:
         print("FPS: " + str(frame_rate_calc))
 
         rawCapture.truncate(0)
-        
+
 except KeyboardInterrupt:
     pass
 
