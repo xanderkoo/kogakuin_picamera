@@ -223,20 +223,21 @@ try:
         #     lidar_input.add(in_tuple)
         #     # uses (degrees, degrees, meters)
         #     # 単位：(度、度、メートル)
-        #
-        # # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
-        # # i.e. a single-column array, where each item in the column has the pixel RGB value
-        # # この部分は具体的に何を行なっているのかわからないが、推論用の同位列(array)を用意しているのではないかと
-        # frame = np.copy(frame1.array)
-        # frame.setflags(write=1)
-        # frame_expanded = np.expand_dims(frame, axis=0)
-        #
-        # # Perform the actual detection by running the model with the image as input
-        # # 画像をインプットとして、推論（物体検出＋認識）を実行する
-        # (boxes, scores, classes, num) = sess.run(
-        #     [detection_boxes, detection_scores, detection_classes, num_detections],
-        #     feed_dict={image_tensor: frame_expanded})
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+        # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
+        # i.e. a single-column array, where each item in the column has the pixel RGB value
+        # この部分は具体的に何を行なっているのかわからないが、推論用の同位列(array)を用意しているのではないかと
+        frame = np.copy(frame1.array)
+        frame.setflags(write=1)
+        frame_expanded = np.expand_dims(frame, axis=0)
+
+        # Perform the actual detection by running the model with the image as input
+        # 画像をインプットとして、推論（物体検出＋認識）を実行する
+        (boxes, scores, classes, num) = sess.run(
+            [detection_boxes, detection_scores, detection_classes, num_detections],
+            feed_dict={image_tensor: frame_expanded})
+
 
         print('\nNew Frame')
 
