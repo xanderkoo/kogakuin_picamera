@@ -322,7 +322,7 @@ try:
 
         # 物体認識の画像が必要とされる場合は、下の部分の上・下の　"""　を抜いてください
 
-        """
+
         # Draw the results of the detection (aka 'visulaize the results')
         vis_util.visualize_boxes_and_labels_on_image_array(
            frame,
@@ -338,7 +338,7 @@ try:
 
         # All the results have been drawn on the frame, so it's time to display it.
         cv2.imshow('Object detector', frame)
-        """
+        
 
         # find FPS, print into console
         t2 = cv2.getTickCount()
