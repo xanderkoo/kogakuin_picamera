@@ -185,7 +185,7 @@ try:
         # it is less than 2.0
         # 発表の為に、LIDARが検出した物体が三つ（左側、中央、右側）あるという前提で行きます。
         # 今の時点では、距離の値(0.47)は、2.0より低ければ、何も影響もないから重要ではない
-        lidar_input = {(-30, -20, 0.47), (-5, 5, 0.47),　(20, 30, 0.47)}
+        lidar_input = {(-30, -20, 0.47), (-5, 5, 0.47), (20, 30, 0.47)}
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -338,7 +338,7 @@ try:
 
         # All the results have been drawn on the frame, so it's time to display it.
         cv2.imshow('Object detector', frame)
-        
+
 
         # find FPS, print into console
         t2 = cv2.getTickCount()
