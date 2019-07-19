@@ -207,6 +207,65 @@ try:
 
         t1 = cv2.getTickCount()
 
+        # Assumes that the Lidar-processing GR-PEACH is going to be able to split the
+        # input into discrete detected objects, and that the RPi is the master of
+        # the GR-PEACH in question
+        # 下記の部分は、GR-PEACHが個別の障害物を検出できる・RPiがマスターで、GR-PEACHがスレーブだであるという前提で書いた
+
+        lidar_input = set()
+
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # the lines below are for the demo
+        # 下記の部分は発表用・デモ用です
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+        # For the demo, we suppose that there are three objects detected by the
+        # LIDAR, one each on the left third, middle third, and right third.
+        # At this point, the distance value (0.47) is not relevant, as long as
+        # it is less than 2.0
+        # 発表の為に、LIDARが検出した物体が三つ（左側、中央、右側）あるという前提で行きます。
+        # 今の時点では、距離の値(0.47)は、2.0より低ければ、何も影響もないから重要ではない
+
+        lidar_input = {(-30, -20, 0.47), (-5, 5, 0.47), (20, 30, 0.47)}
+
+        # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # the section below is commented out for the July demo
+        # 七月の発表・デモのために、下記の部分を全部コメントアウトしました
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # # TODO: verify if the below gets ALL data.
+        # # 下記のコマンドはデータを全部とるかを確認する
+        # print(bus.read_i2c_block_data(address_in, 0))
+        #
+        # # continue looping until it hits a negative value for the distance
+        # # マイナス値の距離に当たるまでループを続ける
+        # while True:
+        #     # get 12 bytes at a time from the GR-PEACH via I2C, representing 3 floats
+        #     # (left angle, right angle, distance), 4 bytes each.
+        #     # (note: not sure what the second parameter (long cmd) represents
+        #
+        #     in_list = bus.read_i2c_block_data(address_in, 0, 12)
+        #     print(str(in_list))
+        #
+        #     # process the distance first, as a negative distance will indicate a termination
+        #     # of the sequence
+        #     # 距離の値がマイナスである場合は、
+        #     dist = struct.unpack('<f', struct.pack('4B', *in_list[8:12]))[0]
+        #     if dist < 0:
+        #         break
+        #
+        #     # tuple containing leftmost angle, rightmost angle, and minimum radius to
+        #     # a detected object, s.t. 0 deg is the middle of the camera's field of view
+        #     # (＜最左の角度＞、＜最右の角度＞、＜LIDARと障害物の間の距離＞)の値を含んだ順序組(tuple)
+        #     # 0度は画像の中央である
+        #     in_tuple = (struct.unpack('<f', struct.pack('4B', *in_list[0:4]))[0],
+        #                 struct.unpack('<f', struct.pack('4B', *in_list[4:8]))[0],
+        #                 dist)
+        #     lidar_input.add(in_tuple)
+        #     # uses (degrees, degrees, meters)
+        #     # 単位：(度、度、メートル)
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
         # Acquire frame and expand frame dimensions to have shape: [1, None, None, 3]
         # i.e. a single-column array, where each item in the column has the pixel RGB value
         frame = np.copy(frame1.array)
