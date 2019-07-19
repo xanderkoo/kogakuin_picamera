@@ -150,7 +150,7 @@ num_detections = detection_graph.get_tensor_by_name('num_detections:0')
 # フレームレートの計算を起動させる
 frame_rate_calc = 1
 freq = cv2.getTickFrequency()
-# font = cv2.FONT_HERSHEY_SIMPLEX
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 # Initialize Picamera, grab reference to raw capture, and perform object detection.
 # Picamera を起動させ、物体認識を実行
