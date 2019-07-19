@@ -100,7 +100,7 @@ NUM_CLASSES = 90
 
 # minimum confidence for object detection
 # 認識の最低確率（これ以下の値は表紙しない）
-MIN_CONF = 0.65
+MIN_CONF = 0.40
 
 # minimum distance threshold for robot to respond to obstacles
 # 障害物に反応する最低距離
@@ -109,8 +109,7 @@ MIN_DIST = 2
 ## Load the label map.
 ## ラベルマップを読み込む
 label_map = label_map_util.load_labelmap(PATH_TO_LABELS)
-categories = label_map_util.convert_label_map_to_categories(label_map,
-                max_num_classes=NUM_CLASSES, use_display_name=True)
+categories = label_map_util.convert_label_map_to_categories(label_map, max_num_classes=NUM_CLASSES, use_display_name=True)
 
 # dict containing all categories, keyed by the id field of each category
 # クラスを全部含んだ連想配列（dict）。キー：クラスのID
@@ -156,7 +155,7 @@ font = cv2.FONT_HERSHEY_SIMPLEX
 print('Initializing Picamera')
 camera = PiCamera()
 camera.resolution = (IM_WIDTH,IM_HEIGHT)
-camera.framerate = 10 # idk
+camera.framerate = 10
 rawCapture = PiRGBArray(camera, size=(IM_WIDTH,IM_HEIGHT))
 rawCapture.truncate(0)
 
@@ -252,17 +251,16 @@ try:
             category_index,
             use_normalized_coordinates=True,
             line_thickness=8,
-            min_score_thresh=0.40)
+            min_score_thresh=MIN_CONF)
 
         cv2.putText(frame,"FPS: {0:.2f}".format(frame_rate_calc),(30,50),font,1,(255,255,0),2,cv2.LINE_AA)
 
         # All the results have been drawn on the frame, so it's time to display it.
         cv2.imshow('Object detector', frame)
-        # """
 
 
         # print('\nNew Frame')
-        # 
+        #
         # # iterates thru every TensorFlow detected object
         # # TensorFlowの推論の結果をみて、TFが検出した物を一つ一つ処理する
         # for idx, s in enumerate(scores[0]):
