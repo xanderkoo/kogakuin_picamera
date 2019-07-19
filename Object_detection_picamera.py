@@ -57,10 +57,10 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 # Set up camera constants
 # カメラの解像度を設定
-IM_WIDTH = 1280
-IM_HEIGHT = 720
-# IM_WIDTH = 400   # Use smaller resolution for
-# IM_HEIGHT = 304  # slightly faster framerate
+# IM_WIDTH = 1280
+# IM_HEIGHT = 720
+IM_WIDTH = 400   # Use smaller resolution for
+IM_HEIGHT = 304  # slightly faster framerate
 
 # Horizontal angular size of the camera. Multiply by (np.pi / 180) for radians
 # カメラの横視角（度）。ラジアンを使用する場合は、視角と (np.pi / 180) をかけてください
