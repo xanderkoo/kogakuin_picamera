@@ -36,7 +36,6 @@ import numpy as np
 from picamera.array import PiRGBArray
 from picamera import PiCamera
 import tensorflow as tf
-import argparse
 
 # for connecting the RPi to the GR-PEACH via I2C
 # RPiとGR-PEACHを組み合わせるにはI2Cを使用
