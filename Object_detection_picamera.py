@@ -64,8 +64,8 @@ IM_HEIGHT = 304  # slightly faster framerate
 
 # Horizontal angular size of the camera. Multiply by (np.pi / 180) for radians
 # カメラの横視角（度）。ラジアンを使用する場合は、視角と (np.pi / 180) をかけてください
-#　IM_ANGLE = 165 # for the fisheye camera lens 広角レンズ用
-IM_ANGLE = 62.2 # for the stock picamera 標準カメラ用
+IM_ANGLE = 165 # for the fisheye camera lens 広角レンズ用
+# IM_ANGLE = 62.2 # for the stock picamera 標準カメラ用
 
 # This is needed since the working directory is the object_detection folder.
 sys.path.append('..')
