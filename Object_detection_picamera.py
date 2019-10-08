@@ -1,5 +1,5 @@
 ######## Object Detection for RPi with Picamera and Lidar Input  #########
-#
+
 # Author: Xander Koo ゼンダー・クー
 # Date: 2019/7/2
 # Description:
@@ -11,7 +11,7 @@
 # 処理されたLIDARデータもインプットとなる。そのデータでは、障害物は個別に順序組（tuple）に
 # 分かれており、 それらの順序組が高優先か低優先（すなわち待機するか回避するか）と本プログラムに
 # 指定される。
-#
+
 ## The overall structure of the code was copied from Evan Juras's sample code
 ## implementing Tensorflow object recognition on the RPi:
 ## 本プログラムはEvan Jurasさんの、TensorFlow物体認識を用いたサンプルコードをベースに
@@ -47,7 +47,7 @@ bus = smbus.SMBus(1)
 import struct
 
 # TODO: update this with the address actually being used by the LIDAR GR-PEACH
-# TODO: 実際のアドレスを書き込まんと/
+# TODO: 実際のアドレスを書き込む
 address_in = 0x08 # address of LIDAR data GR-PEACH
 address_out = 0x60 # address of output GR-PEACH
 
@@ -130,7 +130,7 @@ with detection_graph.as_default():
     sess = tf.Session(graph=detection_graph)
 
 # Define input and output tensors (i.e. data) for the object detection classifier
-# 正直わからん
+
 print('Defining tensors')
 # Input tensor is the image
 image_tensor = detection_graph.get_tensor_by_name('image_tensor:0')
@@ -151,7 +151,7 @@ freq = cv2.getTickFrequency()
 font = cv2.FONT_HERSHEY_SIMPLEX
 
 # Initialize Picamera, grab reference to raw capture, and perform object detection.
-# Picamera を起動させ、物体認識を実行
+# Picamera を起動させ、物体認識を実行する
 print('Initializing Picamera')
 camera = PiCamera()
 camera.resolution = (IM_WIDTH,IM_HEIGHT)
@@ -166,7 +166,7 @@ try:
     # Assumes that the Lidar-processing GR-PEACH is going to be able to split the
     # input into discrete detected objects, and that the RPi is the master of
     # the GR-PEACH in question
-    # 下記の部分は、GR-PEACHが個別の障害物を検出できる・RPiがマスターで、GR-PEACHがスレーブだであるという前提で書いた
+    # 下記の部分は、GR-PEACHが個別の障害物を検出できる・RPiがマスターで、GR-PEACHがスレーブであるという前提で書いた
 
     lidar_input = set()
 
@@ -176,7 +176,7 @@ try:
 
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         # the lines below are for the demo
-        # 下記の部分は発表用・デモ用です
+        # 下記の部分はデモ用
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
         # For the demo, we suppose that there are three objects detected by the
         # LIDAR, one each on the left third, middle third, and right third.
@@ -190,8 +190,7 @@ try:
         # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        # the section below is commented out for the July demo
-        # 七月の発表・デモのために、下記の部分を全部コメントアウトしました
+        #以下、コメントアウト
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         # # TODO: verify if the below gets ALL data.
         # # 下記のコマンドはデータを全部とるかを確認する
@@ -302,12 +301,12 @@ try:
                         # them to be representing the same object
                         # TODO: Figure out a more reliable way of deciding how
                         # to map LIDAR objects to bounding boxes from Tensorflow.
-                        #
+                        
                         # LIDARが特定した物体の範囲が全部TensorFlowが特定したバウンディング
                         # ボックスの範囲以内であれば、LIDARが検出したものとTFが検出したものは、
                         # 同じ物体を示していると言えるでしょう
-                        # TODO: もっとマシ・有効な手段を考えておこう。LIDARの物体とTFの
-                        # 物体はどうすればマッピングできるのか？というのが問題です
+                        # TODO: より有効な手段を考えておこう。
+                        # LIDARの物体とTFの物体はどうすればマッピングできるのか？というのが問題
                         if box_angle_l < lidar_angle_l and box_angle_r > lidar_angle_r:
                             # if the object is a human, send a signal to the GR-PEACH
                             # to wait, and stop looking at other
